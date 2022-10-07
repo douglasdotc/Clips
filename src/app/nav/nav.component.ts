@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ModalService } from '../services/modal.service';
 
 // Class for the nav bar
 @Component({
@@ -8,9 +9,18 @@ import { Component, OnInit } from '@angular/core';
 })
 export class NavComponent implements OnInit {
 
-  constructor() { }
+  constructor(public modal: ModalService) { }
 
   ngOnInit(): void {
   }
 
+  openModal($event: Event) {
+    // prevent default behaviour of the browser
+    // user will not unexpectedly be redirected to
+    // a different page.
+    $event.preventDefault()
+
+    // set the visible flag to true
+    this.modal.toggleModal()
+  }
 }
