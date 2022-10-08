@@ -17,6 +17,24 @@ export class TabsContainerComponent implements AfterContentInit {
   constructor() { }
 
   ngAfterContentInit(): void {
-    console.log(this.tabs)
+    const activeTabs = this.tabs?.filter(
+      tab => tab.active
+    )
+
+    if (!activeTabs || activeTabs.length === 0) {
+      // "!" --> bang operator: tell the compiler to
+      // relax because we are sure that tabs will
+      // at least have one tab
+      this.selectTab(this.tabs!.first)
+    }
+  }
+
+  selectTab(tab: TabComponent) {
+    // Prevent the case where more than 1 tabs are active
+    this.tabs?.forEach(tab => {
+      tab.active = false
+    })
+
+    tab.active = true
   }
 }
