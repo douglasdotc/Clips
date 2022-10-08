@@ -10,7 +10,7 @@ interface IModal {
   providedIn: 'root'
 })
 export class ModalService {
-  public modals: IModal[] = []
+  private modals: IModal[] = []
 
   constructor() { }
 
