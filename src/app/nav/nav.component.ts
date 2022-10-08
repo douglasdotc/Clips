@@ -21,6 +21,6 @@ export class NavComponent implements OnInit {
     $event.preventDefault()
 
     // set the visible flag to true
-    this.modal.toggleModal()
+    this.modal.toggleModal('auth')
   }
 }

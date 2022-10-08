@@ -1,3 +1,4 @@
+import { ModalService } from 'src/app/services/modal.service';
 import { Component, OnInit } from '@angular/core';
 
 // AuthModal class is responsible for the data of the user in the modal
@@ -8,9 +9,11 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AuthModalComponent implements OnInit {
 
-  constructor() { }
+  constructor(public modal: ModalService) { }
 
   ngOnInit(): void {
+    this.modal.register('auth')
+    this.modal.register('test')
   }
 
 }
