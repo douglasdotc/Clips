@@ -1,4 +1,4 @@
-import { Component, AfterContentInit, ContentChildren } from '@angular/core';
+import { Component, AfterContentInit, ContentChildren, QueryList } from '@angular/core';
 import { TabComponent } from '../tab/tab.component';
 
 // Class that manage a group of tabs and
@@ -12,7 +12,7 @@ export class TabsContainerComponent implements AfterContentInit {
 
   // ContentChildren allow us to select elements from projected content
   // We select TabComponents here
-  @ContentChildren(TabComponent) tabs = {}
+  @ContentChildren(TabComponent) tabs?: QueryList<TabComponent>
 
   constructor() { }
 
