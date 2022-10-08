@@ -5,6 +5,7 @@ import { TabsContainerComponent } from './tabs-container/tabs-container.componen
 import { TabComponent } from './tab/tab.component';
 import { InputComponent } from './input/input.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { NgxMaskModule } from 'ngx-mask';
 // import { ModalService } from '../services/modal.service';
 
 // shared module to control the shared component under the shared file
@@ -17,7 +18,8 @@ import { ReactiveFormsModule } from '@angular/forms';
   ],
   imports: [
     CommonModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    NgxMaskModule.forRoot() // forRoot() prevent duplication of a Module
   ],
   // export components so that it is visible in the parent module
   exports: [
