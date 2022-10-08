@@ -36,5 +36,8 @@ export class TabsContainerComponent implements AfterContentInit {
     })
 
     tab.active = true
+
+    // let Angular to prevent default behavior by returning false
+    return false
   }
 }
