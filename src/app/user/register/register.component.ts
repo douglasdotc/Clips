@@ -43,7 +43,16 @@ export class RegisterComponent {
     phoneNumber: this.phoneNumber
   })
 
+  // Alert properties
+  showAlert = false
+  alertMsg = 'Please wait! Your account is being created.'
+  alertColor = 'blue'
+
   register() {
-    console.log('register called')
+    this.showAlert = true
+
+    // Reset message and color
+    this.alertMsg = 'Please wait! Your account is being created.'
+    this.alertColor = 'blue'
   }
 }
