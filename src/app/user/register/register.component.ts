@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms'
-import { AngularFireAuth } from '@angular/fire/compat/auth'
-import { AngularFirestore } from '@angular/fire/compat/firestore'
+import { AuthService } from 'src/app/services/auth.service'
+import IUser from 'src/app/models/user.model';
 
 @Component({
   selector: 'app-register',
@@ -17,7 +17,7 @@ export class RegisterComponent {
     Validators.required,
     Validators.email
   ])
-  age = new FormControl('', [
+  age = new FormControl<number | null>(null, [
     Validators.required,
     Validators.min(10),
     Validators.max(120)
@@ -53,12 +53,7 @@ export class RegisterComponent {
   // Submission control
   inSubmission = false
 
-  // auth service does not need to ne accessed in the template,
-  // so private to the component class
-  constructor(
-    private auth: AngularFireAuth,
-    private db: AngularFirestore
-  ) {}
+  constructor(private auth: AuthService) {}
 
   // async function return a Promise Object
   async register() {
@@ -69,21 +64,8 @@ export class RegisterComponent {
     this.alertMsg = 'Please wait! Your account is being created.'
     this.alertColor = 'blue'
 
-    const { email, password } = this.registerForm.value
-
     try {
-      // register:
-      const userCred = await this.auth.createUserWithEmailAndPassword(
-        email as string, password as string
-      )
-
-      // Add data to the 'user' collection in Firebase:
-      await this.db.collection('users').add({
-        name: this.name.value,
-        email: this.email.value,
-        age: this.age.value,
-        phoneNumber: this.phoneNumber.value
-      })
+      this.auth.createUser(this.registerForm.value as IUser)
 
     } catch(e) {
       console.error(e) // Debug
