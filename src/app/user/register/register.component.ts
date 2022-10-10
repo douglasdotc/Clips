@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { FormGroup, FormControl, Validators } from '@angular/forms'
 import { AngularFireAuth } from '@angular/fire/compat/auth'
+import { AngularFirestore } from '@angular/fire/compat/firestore'
 
 @Component({
   selector: 'app-register',
@@ -54,7 +55,10 @@ export class RegisterComponent {
 
   // auth service does not need to ne accessed in the template,
   // so private to the component class
-  constructor(private auth: AngularFireAuth) {}
+  constructor(
+    private auth: AngularFireAuth,
+    private db: AngularFirestore
+  ) {}
 
   // async function return a Promise Object
   async register() {
@@ -68,10 +72,18 @@ export class RegisterComponent {
     const { email, password } = this.registerForm.value
 
     try {
+      // register:
       const userCred = await this.auth.createUserWithEmailAndPassword(
         email as string, password as string
       )
-      console.log(userCred)
+
+      // Add data to the 'user' collection in Firebase:
+      await this.db.collection('users').add({
+        name: this.name.value,
+        email: this.email.value,
+        age: this.age.value,
+        phoneNumber: this.phoneNumber.value
+      })
 
     } catch(e) {
       console.error(e) // Debug
