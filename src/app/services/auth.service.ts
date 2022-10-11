@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
 import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/compat/firestore'
+import { Observable } from 'rxjs'
+import { map } from 'rxjs/operators'
 import IUser from '../models/user.model'
 
 @Injectable({
@@ -8,6 +10,7 @@ import IUser from '../models/user.model'
 })
 export class AuthService {
   private userCollection: AngularFirestoreCollection<IUser>
+  public isAuthenticated$: Observable<boolean>
 
   // auth service does not need to ne accessed in the template,
   // so private to the component class
@@ -16,6 +19,10 @@ export class AuthService {
     private db: AngularFirestore
   ) {
     this.userCollection = db.collection('users')
+    // If user exists, then the user is logged in
+    this.isAuthenticated$ = auth.user.pipe(
+      map(user => Boolean(user))
+    )
   }
 
   public async createUser(userData: IUser) {
