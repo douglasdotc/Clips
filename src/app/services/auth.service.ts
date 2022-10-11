@@ -28,12 +28,23 @@ export class AuthService {
       userData.email as string, userData.password as string
     )
 
-    // Add data to the 'user' collection in Firebase:
-    await this.userCollection.add({
+    if (!userCred.user) {
+      throw new Error("User cannot be found")
+    }
+
+    // user add data to the 'user' collection in Firebase with the uid generated,
+    // add after register or else there will be no token from Firebase for the user
+    // to do this action (Stateless authentication):
+    await this.userCollection.doc(userCred.user.uid).set({
       name: userData.name,
       email: userData.email,
       age: userData.age,
       phoneNumber: userData.phoneNumber
+    })
+
+    // store displayName to the profile
+    await userCred.user.updateProfile({
+      displayName: userData.name
     })
   }
 }
