@@ -4,6 +4,7 @@ import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/comp
 import { Observable } from 'rxjs'
 import { map, delay } from 'rxjs/operators'
 import IUser from '../models/user.model'
+import { Router } from '@angular/router'
 
 @Injectable({
   providedIn: 'root'
@@ -17,7 +18,8 @@ export class AuthService {
   // so private to the component class
   constructor(
     private auth: AngularFireAuth,
-    private db: AngularFirestore
+    private db: AngularFirestore,
+    private router: Router
   ) {
     this.userCollection = db.collection('users')
     // If user exists, then the user is logged in
@@ -57,5 +59,19 @@ export class AuthService {
     await userCred.user.updateProfile({
       displayName: userData.name
     })
+  }
+
+  // $event does not always exist
+  public async logout($event?: Event) {
+    if ($event) {
+      $event.preventDefault()
+    }
+
+    await this.auth.signOut()
+
+    // Redirect user to Home page:
+    // router.navigateByUrl() return a Promise<boolean>
+    // need to await and provide absolute path
+    await this.router.navigateByUrl('/')
   }
 }
