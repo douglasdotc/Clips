@@ -5,7 +5,12 @@ import { ManageComponent } from './manage/manage.component';
 const routes: Routes = [
   {
     path: 'manage',
-    component: ManageComponent
+    component: ManageComponent,
+    // expose data to other areas of the app by the Router service
+    data: {
+      // To specify that the video managing page will only be visible to authenticated users.
+      authOnly: true
+    }
   }
 ];
 
