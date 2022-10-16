@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
+import { v4 as uuid } from 'uuid'
 
 @Component({
   selector: 'app-upload',
@@ -28,7 +30,9 @@ export class UploadComponent implements OnInit {
   hasUploaded = false
   file: File | null = null
 
-  constructor() { }
+  constructor(
+    private storage: AngularFireStorage
+  ) { }
 
   ngOnInit(): void {
   }
@@ -55,6 +59,12 @@ export class UploadComponent implements OnInit {
   }
 
   uploadFile() {
-    console.log('File uploaded')
+    // Generate a random unique file name using uuid:
+    const clipFileName = uuid()
+    // Create a path for the clip:
+    const clipPath = `clips/${clipFileName}.mp4`
+
+    // upload the file to clipPath in Firebase:
+    this.storage.upload(clipPath, this.file)
   }
 }
