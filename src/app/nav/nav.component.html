@@ -16,9 +16,11 @@
 
         <ng-template #authLinks>
           <li>
+            <!-- [queryParams] to add parameters as query parameter -->
             <a class="px-2" routerLink="/manage"
               routerLinkActive="text-indigo-400"
-              [routerLinkActiveOptions]="{ exact: true }">Manage</a>
+              [routerLinkActiveOptions]="{ exact: true }"
+              [queryParams]="{ sort: '1' }">Manage</a>
           </li>
           <li>
             <a class="px-2" routerLink="/upload"
