@@ -7,6 +7,7 @@ import { InputComponent } from './input/input.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgxMaskModule } from 'ngx-mask';
 import { AlertComponent } from './alert/alert.component';
+import { EventBlockerDirective } from './directive/event-blocker.directive';
 // import { ModalService } from '../services/modal.service';
 
 // shared module to control the shared component under the shared file
@@ -16,7 +17,8 @@ import { AlertComponent } from './alert/alert.component';
     TabsContainerComponent,
     TabComponent,
     InputComponent,
-    AlertComponent
+    AlertComponent,
+    EventBlockerDirective
   ],
   imports: [
     CommonModule,
@@ -29,7 +31,8 @@ import { AlertComponent } from './alert/alert.component';
     TabsContainerComponent,
     TabComponent,
     InputComponent,
-    AlertComponent
+    AlertComponent,
+    EventBlockerDirective
   ],
   // providers: [
   //   ModalService, // ModalService is required here only, we can add it here (1)
