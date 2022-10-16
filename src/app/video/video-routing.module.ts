@@ -2,6 +2,9 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ManageComponent } from './manage/manage.component';
 import { UploadComponent } from './upload/upload.component';
+import { AngularFireAuthGuard, redirectUnauthorizedTo } from '@angular/fire/compat/auth-guard'
+
+const redirectUnauthorizedToHome = () => redirectUnauthorizedTo('/')
 
 const routes: Routes = [
   {
@@ -9,16 +12,24 @@ const routes: Routes = [
     component: ManageComponent,
     // expose data to other areas of the app by the Router service
     data: {
-      // To specify that the video managing page will only be visible to authenticated users.
-      authOnly: true
-    }
+      // To specify that the video managing page will only be
+      // visible to authenticated users.
+      authOnly: true,
+      // Customize the behavior of AngularFireAuthGuard class
+      // by passing an rxjs pipe through the authGuardPipe key.
+      authGuardPipe: redirectUnauthorizedToHome
+    },
+    // canActivate accepts an array of Guards
+    canActivate: [AngularFireAuthGuard]
   },
   {
     path: 'upload',
     component: UploadComponent,
     data: {
-      authOnly: true
-    }
+      authOnly: true,
+      authGuardPipe: redirectUnauthorizedToHome
+    },
+    canActivate: [AngularFireAuthGuard]
   },
   {
     // If user enter this:
