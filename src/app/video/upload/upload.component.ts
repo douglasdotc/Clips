@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { v4 as uuid } from 'uuid'
+import { last } from 'rxjs';
 
 @Component({
   selector: 'app-upload',
@@ -29,6 +30,8 @@ export class UploadComponent implements OnInit {
   isDragover = false
   videoAccepted = false
   file: File | null = null
+  percentage = 0
+  showPercentage = false
 
   // Alert properties:
   showAlert = false
@@ -71,6 +74,7 @@ export class UploadComponent implements OnInit {
     this.showAlert = true
     this.alertMsg = 'Please wait! Your clip is being uploaded.'
     this.alertColor = 'blue'
+    this.showPercentage = true
 
     this.inSubmission = true
 
@@ -79,19 +83,31 @@ export class UploadComponent implements OnInit {
     // Create a path for the clip:
     const clipPath = `clips/${clipFileName}.mp4`
 
-    // upload the file to clipPath in Firebase:
-    try {
-      this.storage.upload(clipPath, this.file)
+    // Upload the file to clipPath in Firebase:
+    const task = this.storage.upload(clipPath, this.file)
+    task.percentageChanges().subscribe(progress => {
+      this.percentage = progress as number / 100
+    })
 
-    } catch (e) {
-      console.log(e)
-      var errMsg = (e as Error).message
-      this.alertMsg = errMsg
-      this.alertColor = 'red'
-      this.inSubmission = false
-      return
-    }
-    this.alertMsg = 'Upload successful.'
-    this.alertColor = 'green'
+    // Subscribe to the last snapshot of the upload progress:
+    task.snapshotChanges().pipe(
+      // last() will only accept the last event of the whole series of snapshot.
+      last()
+    ).subscribe({
+      next: (snapshot) => {
+        // If we can get the last snapshot successfully, then the upload is successful.
+        this.alertColor = 'green'
+        this.alertMsg = 'Success! Your clip is now ready to share with the world.'
+        this.showPercentage = false
+      },
+      error: (error) => {
+        // When the server return an error that means the upload was failed.
+        this.alertMsg = 'Upload Failed! Please try again later.'
+        this.alertColor = 'red'
+        this.inSubmission = false
+        this.showPercentage = false
+        console.error(error)
+      }
+    })
   }
 }
