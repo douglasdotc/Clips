@@ -19,6 +19,12 @@ const routes: Routes = [
     data: {
       authOnly: true
     }
+  },
+  {
+    // If user enter this:
+    path: 'manage-clips',
+    // Redirect user to this:
+    redirectTo: 'manage'
   }
 ];
 
