@@ -27,8 +27,13 @@ export class UploadComponent implements OnInit {
 
   // Video upload controls:
   isDragover = false
-  hasUploaded = false
+  videoAccepted = false
   file: File | null = null
+
+  // Alert properties:
+  showAlert = false
+  alertMsg = 'Please wait! Your clip is being uploaded.'
+  alertColor = 'blue'
 
   constructor(
     private storage: AngularFireStorage
@@ -39,13 +44,17 @@ export class UploadComponent implements OnInit {
 
   storeFile($event: Event) {
     this.isDragover = false
-    this.hasUploaded = false
+    this.videoAccepted = false
+    this.showAlert = false
 
     this.file = ($event as DragEvent).dataTransfer?.files.item(0) ?? null
 
     // Exit the function if the file is null or it is not mp4
     // Mime Types: type/subtype
     if (!this.file || this.file.type !== 'video/mp4') {
+      this.alertMsg = 'We accept mp4 files only.'
+      this.showAlert = true
+      this.alertColor = 'red'
       return
     }
 
@@ -54,17 +63,35 @@ export class UploadComponent implements OnInit {
       // Replace the file extension withm null string with regex
       this.file.name.replace(/\.[^/.]+$/, '')
     )
-    this.hasUploaded = true
+    this.videoAccepted = true
     console.log(this.file)
   }
 
   uploadFile() {
+    this.showAlert = true
+    this.alertMsg = 'Please wait! Your clip is being uploaded.'
+    this.alertColor = 'blue'
+
+    this.inSubmission = true
+
     // Generate a random unique file name using uuid:
     const clipFileName = uuid()
     // Create a path for the clip:
     const clipPath = `clips/${clipFileName}.mp4`
 
     // upload the file to clipPath in Firebase:
-    this.storage.upload(clipPath, this.file)
+    try {
+      this.storage.upload(clipPath, this.file)
+
+    } catch (e) {
+      console.log(e)
+      var errMsg = (e as Error).message
+      this.alertMsg = errMsg
+      this.alertColor = 'red'
+      this.inSubmission = false
+      return
+    }
+    this.alertMsg = 'Upload successful.'
+    this.alertColor = 'green'
   }
 }
