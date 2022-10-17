@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { v4 as uuid } from 'uuid'
-import { last } from 'rxjs';
+import { last, switchMap } from 'rxjs';
+import { AngularFireAuth } from '@angular/fire/compat/auth'
+import firebase from 'firebase/compat/app'
+import { ClipService } from 'src/app/services/clip.service';
 
 @Component({
   selector: 'app-upload',
@@ -33,14 +36,23 @@ export class UploadComponent implements OnInit {
   percentage = 0
   showPercentage = false
 
+  // user
+  user: firebase.User | null = null
+
   // Alert properties:
   showAlert = false
   alertMsg = 'Please wait! Your clip is being uploaded.'
   alertColor = 'blue'
 
   constructor(
-    private storage: AngularFireStorage
-  ) { }
+    private storage: AngularFireStorage,
+    private auth: AngularFireAuth,
+    private clipsService: ClipService
+  ) {
+    // user will not be able to access this page if he is not authenticated.
+    // the user subscribed will always received a non-null value.
+    auth.user.subscribe(user => this.user = user)
+  }
 
   ngOnInit(): void {
   }
@@ -85,6 +97,9 @@ export class UploadComponent implements OnInit {
 
     // Upload the file to clipPath in Firebase:
     const task = this.storage.upload(clipPath, this.file)
+    // ref() will create a storage reference that points to a specific file:
+    const clipRef = this.storage.ref(clipPath)
+
     task.percentageChanges().subscribe(progress => {
       this.percentage = progress as number / 100
     })
@@ -92,9 +107,24 @@ export class UploadComponent implements OnInit {
     // Subscribe to the last snapshot of the upload progress:
     task.snapshotChanges().pipe(
       // last() will only accept the last event of the whole series of snapshot.
-      last()
+      last(),
+      // return the download url Observable from getDownloadURL()
+      switchMap(() => clipRef.getDownloadURL())
     ).subscribe({
-      next: (snapshot) => {
+      next: (url) => {
+        // Storing the file data:
+        const clip = {
+          uid: this.user?.uid as string,
+          displayName: this.user?.displayName as string,
+          title: this.title.value,
+          fileName: `${clipFileName}.mp4`,
+          url
+        }
+
+        // Add clip info to database:
+        this.clipsService.createClip(clip)
+        console.log(clip)
+
         // If we can get the last snapshot successfully, then the upload is successful.
         this.alertColor = 'green'
         this.alertMsg = 'Success! Your clip is now ready to share with the world.'
