@@ -14,10 +14,10 @@ export class ClipService {
   }
 
   // Add a clip data to the collection 'clips' in the database:
-  async createClip(data: IClip) {
+  createClip(data: IClip) : Promise<DocumentReference<IClip>>{
     // we use add() instead of set() because add() will instruct
     // Firebase to generate an id instead of passing an id to it
     // and we dont care about the id in this case.
-    await this.clipsCollection.add(data)
+    return this.clipsCollection.add(data)
   }
 }

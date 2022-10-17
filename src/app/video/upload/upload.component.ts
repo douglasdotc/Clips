@@ -6,6 +6,7 @@ import { last, switchMap } from 'rxjs';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
 import firebase from 'firebase/compat/app'
 import { ClipService } from 'src/app/services/clip.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-upload',
@@ -48,7 +49,8 @@ export class UploadComponent implements OnDestroy {
   constructor(
     private storage: AngularFireStorage,
     private auth: AngularFireAuth,
-    private clipsService: ClipService
+    private clipsService: ClipService,
+    private router: Router
   ) {
     // user will not be able to access this page if he is not authenticated.
     // the user subscribed will always received a non-null value.
@@ -125,24 +127,35 @@ export class UploadComponent implements OnDestroy {
       // return the download url Observable from getDownloadURL()
       switchMap(() => clipRef.getDownloadURL())
     ).subscribe({
-      next: (url) => {
+      next: async (url) => {
         // Storing the file data:
         const clip = {
           uid: this.user?.uid as string,
           displayName: this.user?.displayName as string,
           title: this.title.value,
           fileName: `${clipFileName}.mp4`,
-          url
+          url,
+          // Time in the server's timezone:
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }
 
-        // Add clip info to database:
-        this.clipsService.createClip(clip)
+        // Add clip info to database, createClip() returns a Promise from the server
+        // which is asynchronous:
+        const clipDocRef = await this.clipsService.createClip(clip)
         console.log(clip)
 
         // If we can get the last snapshot successfully, then the upload is successful.
         this.alertColor = 'green'
         this.alertMsg = 'Success! Your clip is now ready to share with the world.'
         this.showPercentage = false
+
+        // Navigate user to the clip page after 1000ms.
+        setTimeout(() => {
+          this.router.navigate([
+            // Absolute path: clip/:id
+            'clip', clipDocRef.id
+          ])
+        }, 1000)
       },
       error: (error) => {
         //Enable the form again to let the user to correct the form.

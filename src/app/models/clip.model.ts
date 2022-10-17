@@ -4,4 +4,5 @@ export default interface IClip {
   title: string,
   fileName: string,
   url:string
+  timestamp: firebase.firestore.FieldValue;
 }
