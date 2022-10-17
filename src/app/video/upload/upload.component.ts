@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { AngularFireStorage } from '@angular/fire/compat/storage';
+import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/compat/storage';
 import { v4 as uuid } from 'uuid'
 import { last, switchMap } from 'rxjs';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
@@ -12,7 +12,7 @@ import { ClipService } from 'src/app/services/clip.service';
   templateUrl: './upload.component.html',
   styleUrls: ['./upload.component.css']
 })
-export class UploadComponent implements OnInit {
+export class UploadComponent implements OnDestroy {
   title = new FormControl('', {
     validators: [
     Validators.required,
@@ -35,6 +35,7 @@ export class UploadComponent implements OnInit {
   file: File | null = null
   percentage = 0
   showPercentage = false
+  task?: AngularFireUploadTask
 
   // user
   user: firebase.User | null = null
@@ -54,7 +55,10 @@ export class UploadComponent implements OnInit {
     auth.user.subscribe(user => this.user = user)
   }
 
-  ngOnInit(): void {
+  ngOnDestroy(): void {
+    // Cancel the upload process if the user navigate to a different page
+    // in which case angular will destroy the component.
+    this.task?.cancel()
   }
 
   storeFile($event: Event) {
@@ -105,16 +109,17 @@ export class UploadComponent implements OnInit {
     const clipPath = `clips/${clipFileName}.mp4`
 
     // Upload the file to clipPath in Firebase:
-    const task = this.storage.upload(clipPath, this.file)
+    this.task = this.storage.upload(clipPath, this.file)
+
     // ref() will create a storage reference that points to a specific file:
     const clipRef = this.storage.ref(clipPath)
 
-    task.percentageChanges().subscribe(progress => {
+    this.task.percentageChanges().subscribe(progress => {
       this.percentage = progress as number / 100
     })
 
     // Subscribe to the last snapshot of the upload progress:
-    task.snapshotChanges().pipe(
+    this.task.snapshotChanges().pipe(
       // last() will only accept the last event of the whole series of snapshot.
       last(),
       // return the download url Observable from getDownloadURL()
