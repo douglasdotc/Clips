@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import IClip from 'src/app/models/clip.model';
+import { ClipService } from 'src/app/services/clip.service';
 
 @Component({
   selector: 'app-manage',
@@ -11,10 +13,12 @@ export class ManageComponent implements OnInit {
   // 1: decending order (new upload first)
   // 2: ascending order
   videoOrder = '1'
+  clips: IClip[] = []
 
   constructor(
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private clipService: ClipService
   ) { }
 
   ngOnInit(): void {
@@ -25,6 +29,21 @@ export class ManageComponent implements OnInit {
     // navigate to a different page.
     this.route.queryParamMap.subscribe((params: Params) => {
       this.videoOrder = params.get('sort') === '2' ? params.get('sort') : '1'
+    })
+
+    // getUserClips() return a list of QuerySnapshot<IClip>.docs
+    this.clipService.getUserClips().subscribe(docs => {
+      // Reset
+      this.clips = []
+
+      docs.forEach(doc => {
+        this.clips.push({
+          // ID of the document doc
+          docID: doc.id,
+          // Spread operator will merge the data with the object.
+          ...doc.data()
+        })
+      })
     })
   }
 
