@@ -62,7 +62,13 @@ export class UploadComponent implements OnInit {
     this.videoAccepted = false
     this.showAlert = false
 
-    this.file = ($event as DragEvent).dataTransfer?.files.item(0) ?? null
+    // Some browsers do not support drag and drop events
+    // in which case we do not have a dataTransfer property.
+    // We implements a fallback upload method using input and
+    // that will be a HTMLInputElement.
+    this.file = ($event as DragEvent).dataTransfer ?
+      ($event as DragEvent).dataTransfer?.files.item(0) ?? null :
+      ($event.target as HTMLInputElement).files?.item(0) ?? null
 
     // Exit the function if the file is null or it is not mp4
     // Mime Types: type/subtype
@@ -83,6 +89,9 @@ export class UploadComponent implements OnInit {
   }
 
   uploadFile() {
+    // Disable the form so that the user cannot edit the form.
+    this.uploadForm.disable()
+
     this.showAlert = true
     this.alertMsg = 'Please wait! Your clip is being uploaded.'
     this.alertColor = 'blue'
@@ -131,6 +140,9 @@ export class UploadComponent implements OnInit {
         this.showPercentage = false
       },
       error: (error) => {
+        //Enable the form again to let the user to correct the form.
+        this.uploadForm.enable()
+
         // When the server return an error that means the upload was failed.
         this.alertMsg = 'Upload Failed! Please try again later.'
         this.alertColor = 'red'
