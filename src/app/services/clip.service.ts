@@ -7,7 +7,7 @@ import {
   QuerySnapshot
 } from '@angular/fire/compat/firestore';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
-import { of } from 'rxjs';
+import { BehaviorSubject, combineLatest, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import IClip from '../models/clip.model';
 
@@ -33,9 +33,14 @@ export class ClipService {
   }
 
   // Get the clips that are uploaded by the user
-  getUserClips() {
-    return this.auth.user.pipe(
-      switchMap(user => {
+  getUserClips(sort$: BehaviorSubject<string>) {
+    return combineLatest([
+      this.auth.user,
+      sort$
+    ]).pipe(
+      switchMap(values => {
+        const[user, sort] = values
+
         // It is possible that the user is null
         if (!user) {
           return of([])
@@ -43,9 +48,12 @@ export class ClipService {
 
         // Form a query where the clip has a uid == user.uid
         const query = this.clipsCollection.ref.where(
-          //name of prop to check in document, comparason operator, value to compare
+          // name of prop to check in document, comparason operator, value to compare
           'uid', '==', user.uid
+        ).orderBy(
+          'timestamp', sort === '1' ? 'desc' : 'asc'
         )
+
         return query.get() // return a Promise of QuerySnapshot<IClip>
       }),
       // The clips are in an Observable called docs, we return the docs:

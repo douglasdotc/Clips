@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import IClip from 'src/app/models/clip.model';
 import { ClipService } from 'src/app/services/clip.service';
 import { ModalService } from 'src/app/services/modal.service';
@@ -16,13 +17,20 @@ export class ManageComponent implements OnInit {
   videoOrder = '1'
   clips: IClip[] = []
   activeClip: IClip | null = null
+  // BehaviorSubject is an Observable that can acts like
+  // a observable and observer at the same time,
+  // meaning that an observer can also push value to the observer.
+  sort$: BehaviorSubject<string>
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private clipService: ClipService,
     private modal: ModalService
-  ) { }
+  ) {
+    // Initialize with videoOrder:
+    this.sort$ = new BehaviorSubject(this.videoOrder)
+  }
 
   ngOnInit(): void {
     // Subscribe to changes from the route parameters
@@ -31,11 +39,14 @@ export class ManageComponent implements OnInit {
     // Observable when the component is destroyed, which happens when ther user
     // navigate to a different page.
     this.route.queryParamMap.subscribe((params: Params) => {
+      // Listen to the videoOrder from the user:
       this.videoOrder = params.get('sort') === '2' ? params.get('sort') : '1'
+      // Push the latest sort order to the BehaviorSubject Observable:
+      this.sort$.next(this.videoOrder)
     })
 
     // getUserClips() return a list of QuerySnapshot<IClip>.docs
-    this.clipService.getUserClips().subscribe(docs => {
+    this.clipService.getUserClips(this.sort$).subscribe(docs => {
       // Reset
       this.clips = []
 
