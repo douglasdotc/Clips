@@ -81,4 +81,18 @@ export class ManageComponent implements OnInit {
       }
     })
   }
+
+  deleteClip($event: Event, clip: IClip) {
+    $event.preventDefault()
+
+    // Delete the clip in Firebase:
+    this.clipService.deleteClip(clip)
+
+    // remove the clip from array:
+    this.clips.forEach((element, index) => {
+      if (element.docID == clip.docID) {
+        this.clips.splice(index, 1)
+      }
+    })
+  }
 }
