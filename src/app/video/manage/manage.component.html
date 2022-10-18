@@ -51,5 +51,5 @@
     </div>
   </div>
 </div>
-
-<app-edit [activeClip]="activeClip"></app-edit>
+<!-- Upon an update event, the edit form will return an event which is of type IClip -->
+<app-edit [activeClip]="activeClip" (update)="update($event)"></app-edit>

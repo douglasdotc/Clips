@@ -70,4 +70,15 @@ export class ManageComponent implements OnInit {
     this.activeClip = clip
     this.modal.toggleModal('editClip')
   }
+
+  // Upon an update event, the edit form will return an event which is of type IClip
+  // Update the list of clips showing to the user.
+  update($event: IClip) {
+    this.clips.forEach((element, index) => {
+      // Identify the clip and update the title.
+      if (element.docID == $event.docID) {
+        this.clips[index].title = $event.title
+      }
+    })
+  }
 }
