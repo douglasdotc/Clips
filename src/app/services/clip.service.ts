@@ -50,4 +50,11 @@ export class ClipService {
       map(snapshot => (snapshot as QuerySnapshot<IClip>).docs)
     )
   }
+
+  updateClip(id: string, title: string) {
+    // Update the title of the clip and return a Promise
+    return this.clipsCollection.doc(id).update({
+      title
+    })
+  }
 }
