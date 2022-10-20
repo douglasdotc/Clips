@@ -2,7 +2,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/compat/storage';
 import { v4 as uuid } from 'uuid'
-import { last, switchMap } from 'rxjs';
+import { combineLatest, last, switchMap } from 'rxjs';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
 import firebase from 'firebase/compat/app'
 import { ClipService } from 'src/app/services/clip.service';
@@ -147,8 +147,16 @@ export class UploadComponent implements OnDestroy {
       screenshotPath, screenshotBlob
     )
 
-    this.task.percentageChanges().subscribe(progress => {
-      this.percentage = progress as number / 100
+    combineLatest([
+      this.task.percentageChanges(),
+      this.screenshotTask.percentageChanges()
+    ]).subscribe((progress) => {
+      const [clipProcess, screenshotProcess] = progress
+      if (!clipProcess || !screenshotProcess) {
+        return
+      }
+      const total = clipProcess + screenshotProcess
+      this.percentage = total as number / 200
     })
 
     // Subscribe to the last snapshot of the upload progress:
