@@ -5,6 +5,8 @@ import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
   providedIn: 'root'
 })
 export class FfmpegService {
+  // Indicate that FFmpeg is getting screenshots:
+  isRunning = false
   // FFmpeg is ready if it is loaded:
   isReady = false
   // FFmpeg instance:
@@ -29,6 +31,7 @@ export class FfmpegService {
   }
 
   async getScreenshots(file: File) {
+    this.isRunning = true
     // Convert file to binary data:
     const data = await fetchFile(file)
 
@@ -85,7 +88,7 @@ export class FfmpegService {
 
       screenshots.push(screenshotURL)
     })
-
+    this.isRunning = false
     return screenshots
   }
 }

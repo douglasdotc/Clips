@@ -68,6 +68,11 @@ export class UploadComponent implements OnDestroy {
   }
 
   async storeFile($event: Event) {
+    // Prevent user from uploading another file while getting screenshots:
+    if (this.ffmpegService.isRunning) {
+      return
+    }
+
     this.isDragover = false
     this.videoAccepted = false
     this.showAlert = false
