@@ -40,6 +40,7 @@ export class UploadComponent implements OnDestroy {
   task?: AngularFireUploadTask
   screenshots: string[] = []
   selectedScreenshot = ''
+  screenshotTask?: AngularFireUploadTask
 
   // user:
   user: firebase.User | null = null
@@ -110,7 +111,7 @@ export class UploadComponent implements OnDestroy {
     console.log(this.file)
   }
 
-  uploadFile() {
+  async uploadFile() {
     // Disable the form so that the user cannot edit the form.
     this.uploadForm.disable()
 
@@ -123,14 +124,28 @@ export class UploadComponent implements OnDestroy {
 
     // Generate a random unique file name using uuid:
     const clipFileName = uuid()
+
     // Create a path for the clip:
     const clipPath = `clips/${clipFileName}.mp4`
+
+    // Get blob from selectedScreenshot URL:
+    const screenshotBlob = await this.ffmpegService.blobFromURL(
+      this.selectedScreenshot
+    )
+
+    // Create a path for the screenshot:
+    const screenshotPath = `screenshots/${clipFileName}.png`
 
     // Upload the file to clipPath in Firebase:
     this.task = this.storage.upload(clipPath, this.file)
 
     // ref() will create a storage reference that points to a specific file:
     const clipRef = this.storage.ref(clipPath)
+
+    // Upload the screenshot as Blob:
+    this.screenshotTask = this.storage.upload(
+      screenshotPath, screenshotBlob
+    )
 
     this.task.percentageChanges().subscribe(progress => {
       this.percentage = progress as number / 100

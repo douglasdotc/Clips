@@ -91,4 +91,13 @@ export class FfmpegService {
     this.isRunning = false
     return screenshots
   }
+
+  async blobFromURL(url: string) {
+    // Convert url to binary:
+    const response = await fetch(url)
+    // convert binary to blob:
+    const blob = await response.blob()
+
+    return blob
+  }
 }
