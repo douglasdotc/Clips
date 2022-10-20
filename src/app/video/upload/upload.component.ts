@@ -39,6 +39,7 @@ export class UploadComponent implements OnDestroy {
   showPercentage = false
   task?: AngularFireUploadTask
   screenshots: string[] = []
+  selectedScreenshot = ''
 
   // user:
   user: firebase.User | null = null
@@ -96,6 +97,9 @@ export class UploadComponent implements OnDestroy {
 
     // Get screenshots using ffmpeg:
     this.screenshots = await this.ffmpegService.getScreenshots(this.file)
+
+    // Initialize selectedScreenshot:
+    this.selectedScreenshot = this.screenshots[0]
 
     // Replace the title with the file name by default
     this.title.setValue(
