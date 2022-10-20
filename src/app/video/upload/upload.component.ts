@@ -38,8 +38,9 @@ export class UploadComponent implements OnDestroy {
   percentage = 0
   showPercentage = false
   task?: AngularFireUploadTask
+  screenshots: string[] = []
 
-  // user
+  // user:
   user: firebase.User | null = null
 
   // Alert properties:
@@ -66,7 +67,7 @@ export class UploadComponent implements OnDestroy {
     this.task?.cancel()
   }
 
-  storeFile($event: Event) {
+  async storeFile($event: Event) {
     this.isDragover = false
     this.videoAccepted = false
     this.showAlert = false
@@ -87,6 +88,9 @@ export class UploadComponent implements OnDestroy {
       this.alertColor = 'red'
       return
     }
+
+    // Get screenshots using ffmpeg:
+    this.screenshots = await this.ffmpegService.getScreenshots(this.file)
 
     // Replace the title with the file name by default
     this.title.setValue(
