@@ -7,6 +7,12 @@ import {
   QuerySnapshot
 } from '@angular/fire/compat/firestore';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
+import {
+  ActivatedRouteSnapshot,
+  Resolve,
+  Router,
+  RouterStateSnapshot
+} from '@angular/router';
 import { querystring } from '@firebase/util';
 import { BehaviorSubject, combineLatest, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
@@ -15,7 +21,7 @@ import IClip from '../models/clip.model';
 @Injectable({
   providedIn: 'root'
 })
-export class ClipService {
+export class ClipService implements Resolve<IClip | null> {
   // Services that connect the component to a collection in the database:
   public clipsCollection: AngularFirestoreCollection<IClip>
   // Array to store the clips returned:
@@ -26,9 +32,41 @@ export class ClipService {
   constructor(
     private db: AngularFirestore,
     private auth: AngularFireAuth,
-    private storage: AngularFireStorage
+    private storage: AngularFireStorage,
+    private router: Router
   ) {
     this.clipsCollection = db.collection('clips')
+  }
+
+  // We use resolvers to get data from Firebase for this page,
+  // resolvers are functions that return data for a page component.
+  // The router will run the function before loading the page component.
+  resolve(
+    // route store information for the route that we are being visited.
+    route: ActivatedRouteSnapshot,
+    // state store the current representation of our route in a tree.
+    state: RouterStateSnapshot
+  ) {
+    // return an Observable<IClip>:
+    return this.clipsCollection.doc(route.params.id)
+    .get()
+    .pipe(
+      // return of the Query from get() gives a document snapshot,
+      // we will map it to an Observable:
+      map(snapshot => {
+        // Get the data from the snapshot:
+        const data = snapshot.data()
+
+        // If the clip does not exist, we redirect the user to home page:
+        if (!data) {
+          this.router.navigate(['/'])
+          return null
+        }
+
+        // If data exist we return the data:
+        return data
+      })
+    )
   }
 
   // Add a clip data to the collection 'clips' in the database:

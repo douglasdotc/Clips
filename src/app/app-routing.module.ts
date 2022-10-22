@@ -4,6 +4,7 @@ import { AboutComponent } from './about/about.component';
 import { ClipComponent } from './clip/clip.component';
 import { HomeComponent } from './home/home.component';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { ClipService } from './services/clip.service';
 
 const routes: Routes = [
   {
@@ -17,7 +18,14 @@ const routes: Routes = [
   {
     // :id is a placeholder for the id of the clip
     path: 'clip/:id',
-    component: ClipComponent
+    component: ClipComponent,
+    // Register the resultant data of the resolver from ClipService as clip.
+    // Angular will search for a function name resolve()
+    // in ClipService. If exist, The router will use it
+    // before loading the component.
+    resolve: {
+      clip: ClipService
+    }
   },
   {
     // '**' wildcard to capture unknown paths

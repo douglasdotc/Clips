@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import {
   Component,
   OnInit,
@@ -7,6 +8,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import videojs from 'video.js'
+import IClip from '../models/clip.model';
 
 @Component({
   selector: 'app-clip',
@@ -17,10 +19,10 @@ import videojs from 'video.js'
   // View Encapsulation helps to prevent CSS styles leak to another element
   // by encapsulating the CSS code with an ID, so the style is unique to a
   // particular element.
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  providers: [DatePipe]
 })
 export class ClipComponent implements OnInit {
-  id = ''
   // ViewChild() perform a query on the template and select specified elements:
   // When we are selecting an element with ViewChild,
   // the property will be stored as an ElementRef class.
@@ -35,6 +37,9 @@ export class ClipComponent implements OnInit {
   // Video Player instance:
   player?: videojs.Player
 
+  // The clip we get from Firebase:
+  clip?: IClip
+
   constructor(
     public route: ActivatedRoute
   ) { }
@@ -44,9 +49,15 @@ export class ClipComponent implements OnInit {
     // videoPlayer needs direct access to the element (nativeElement):
     this.player = videojs(this.target?.nativeElement)
 
-    // Subscribe to params.id to receive the latest id from the user.
-    this.route.params.subscribe((params: Params) => {
-      this.id = params.id
+    // Subscribe to data, get the clip and pass to the videoPlayer:
+    this.route.data.subscribe(data => {
+      this.clip = data.clip as IClip
+
+      // Provide URL and type for the player:
+      this.player?.src({
+        src: this.clip.url,
+        type: 'video/mp4'
+      })
     })
   }
 }
