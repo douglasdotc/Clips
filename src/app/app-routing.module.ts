@@ -27,6 +27,14 @@ const routes: Routes = [
       clip: ClipService
     }
   },
+  // Lazy load video features in VideoModule,
+  // we only need the module when user visit manage or upload page:
+  {
+    // Lazy load video features when user visit paths from here (/manage or /upload)
+    path: '',
+    // loadChildren loads a module dynamically
+    loadChildren: async () => (await import('./video/video.module')).VideoModule
+  },
   {
     // '**' wildcard to capture unknown paths
     // Wildcard route should always at the end of this array.
