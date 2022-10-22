@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ClipService } from '../services/clip.service';
 
 @Component({
   selector: 'app-clips-list',
@@ -7,7 +8,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 })
 export class ClipsListComponent implements OnInit, OnDestroy {
 
-  constructor() { }
+  constructor(
+    public clipService: ClipService
+  ) {
+    this.clipService.getClips()
+  }
 
   ngOnInit(): void {
     // Listen to scroll event:
@@ -41,8 +46,9 @@ export class ClipsListComponent implements OnInit, OnDestroy {
     // Check if scrollTop + innerHeight = offsetHeight,
     // if yes, that means the user scrolled to the end of the page:
     const bottomOfWindow = Math.round(scrollTop + innerHeight) === offsetHeight
+    // If the user reached the bottom of the page, we get more clips:
     if(bottomOfWindow) {
-      console.log('Bottom of window')
+      this.clipService.getClips()
     }
   }
 }
