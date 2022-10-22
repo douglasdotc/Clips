@@ -106,4 +106,22 @@ export class ManageComponent implements OnInit {
       }
     })
   }
+
+  // Clipboard API is asynchronous
+  async copyToClipboard($event: MouseEvent, docID: string | undefined) {
+    // Prevent default behavior of the browser on click:
+    $event.preventDefault()
+
+    // Guarding from empty docID:
+    if (!docID) {
+      return
+    }
+
+    // Form URL:
+    const url = `${location.origin}/clip/${docID}`
+    // Write the url to the user's clipboard:
+    await navigator.clipboard.writeText(url)
+    // Alert the user that the link is copied:
+    alert('Link Copied!')
+  }
 }
