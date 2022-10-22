@@ -1,16 +1,21 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ClipService } from '../services/clip.service';
 
 @Component({
   selector: 'app-clips-list',
   templateUrl: './clips-list.component.html',
-  styleUrls: ['./clips-list.component.css']
+  styleUrls: ['./clips-list.component.css'],
+  // Register DataPipe so that we can inject
+  // it into fb-timestamp (used in the template).
+  providers: [DatePipe]
 })
 export class ClipsListComponent implements OnInit, OnDestroy {
 
   constructor(
     public clipService: ClipService
   ) {
+    // Initial get:
     this.clipService.getClips()
   }
 
@@ -38,8 +43,8 @@ export class ClipsListComponent implements OnInit, OnDestroy {
     // offsetHeight +------------------------------+-
     //              |                              |^
     //              |                              | innerHeight
-    //              |                              |v
-    //              +------------------------------+-
+    //             v|                              |v
+    //             -+------------------------------+-
     const { scrollTop, offsetHeight } = document.documentElement
     const { innerHeight } = window
 
