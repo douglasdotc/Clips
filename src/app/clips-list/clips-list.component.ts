@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { ClipService } from '../services/clip.service';
 
 @Component({
@@ -11,6 +11,8 @@ import { ClipService } from '../services/clip.service';
   providers: [DatePipe]
 })
 export class ClipsListComponent implements OnInit, OnDestroy {
+  // We just want infinite scrolling on home page
+  @Input() scrollable = true
 
   constructor(
     public clipService: ClipService
@@ -21,12 +23,19 @@ export class ClipsListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Listen to scroll event:
-    window.addEventListener('scroll', this.handleScroll)
+    if (this.scrollable){
+      window.addEventListener('scroll', this.handleScroll)
+    }
   }
 
   ngOnDestroy(): void {
     // Destroy event listener to scroll event when user navigate away from the page:
-    window.removeEventListener('scroll', this.handleScroll)
+    if (this.scrollable) {
+      window.removeEventListener('scroll', this.handleScroll)
+    }
+
+    // Reset the array of clips:
+    this.clipService.pageClips = []
   }
 
   // This function checks the current scroll posiition of the page:
