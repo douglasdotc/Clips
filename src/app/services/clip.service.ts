@@ -7,6 +7,7 @@ import {
   QuerySnapshot
 } from '@angular/fire/compat/firestore';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
+import { querystring } from '@firebase/util';
 import { BehaviorSubject, combineLatest, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import IClip from '../models/clip.model';
@@ -15,7 +16,13 @@ import IClip from '../models/clip.model';
   providedIn: 'root'
 })
 export class ClipService {
+  // Services that connect the component to a collection in the database:
   public clipsCollection: AngularFirestoreCollection<IClip>
+  // Array to store the clips returned:
+  pageClips: IClip[] = []
+  // Indicate whether we are processing the user's query:
+  pendingRequest = false
+
   constructor(
     private db: AngularFirestore,
     private auth: AngularFireAuth,
@@ -81,5 +88,42 @@ export class ClipService {
 
     // Delete the clip from the database:
     await this.clipsCollection.doc(clip.docID).delete()
+  }
+
+  async getClips() {
+    // Guard the function from multiple request at the same time from the user
+    if (this.pendingRequest) {
+      return
+    }
+    this.pendingRequest = true
+
+    // Form the query, get 6 clips in descending order:
+    let query = this.clipsCollection.ref.orderBy('timestamp', 'desc').limit(6)
+
+    // get the current lenggth of the clip list:
+    const { length } = this.pageClips
+
+    // Modify the query to start after the last clip we have received if length > 0:
+    if (length) {
+      // Get the last clip's docID:
+      const lastDocID = this.pageClips[length - 1].docID
+      // Get the last clip from the database and turn it into a Promise snapshot:
+      const lastDoc = await this.clipsCollection.doc(lastDocID).get().toPromise()
+
+      // Modify the query, startAfter() requires a snapshot as an input:
+      query = query.startAfter(lastDoc)
+    }
+
+    // Execute the query:
+    const snapshot = await query.get()
+
+    // Extract the data from the query result and append the clips to the array:
+    snapshot.forEach(doc => {
+      this.pageClips.push({
+        docID: doc.id,
+        ...doc.data()
+      })
+    })
+    this.pendingRequest = false
   }
 }
