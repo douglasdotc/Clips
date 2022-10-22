@@ -1,11 +1,23 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ViewChild,
+  ElementRef,
+  ViewEncapsulation
+} from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import videojs from 'video.js'
 
 @Component({
   selector: 'app-clip',
   templateUrl: './clip.component.html',
-  styleUrls: ['./clip.component.css']
+  styleUrls: ['./clip.component.css'],
+  // Disable view encapsulation for CSS because videojs does not provide
+  // a CSS that can automatically encapsulated by Angular.
+  // View Encapsulation helps to prevent CSS styles leak to another element
+  // by encapsulating the CSS code with an ID, so the style is unique to a
+  // particular element.
+  encapsulation: ViewEncapsulation.None
 })
 export class ClipComponent implements OnInit {
   id = ''
