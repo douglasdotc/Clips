@@ -2,7 +2,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { AngularFireStorage, AngularFireUploadTask } from '@angular/fire/compat/storage';
 import { v4 as uuid } from 'uuid'
-import { combineLatest, last, switchMap } from 'rxjs';
+import { combineLatest, forkJoin, switchMap } from 'rxjs';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
 import firebase from 'firebase/compat/app'
 import { ClipService } from 'src/app/services/clip.service';
@@ -139,6 +139,7 @@ export class UploadComponent implements OnDestroy {
     // Upload the file to clipPath in Firebase:
     this.task = this.storage.upload(clipPath, this.file)
 
+    // Storage reference for the clip:
     // ref() will create a storage reference that points to a specific file:
     const clipRef = this.storage.ref(clipPath)
 
@@ -146,6 +147,9 @@ export class UploadComponent implements OnDestroy {
     this.screenshotTask = this.storage.upload(
       screenshotPath, screenshotBlob
     )
+
+    // Storage reference for the screenshot:
+    const screenshotRef = this.storage.ref(screenshotPath)
 
     combineLatest([
       this.task.percentageChanges(),
@@ -159,21 +163,33 @@ export class UploadComponent implements OnDestroy {
       this.percentage = total as number / 200
     })
 
-    // Subscribe to the last snapshot of the upload progress:
-    this.task.snapshotChanges().pipe(
-      // last() will only accept the last event of the whole series of snapshot.
-      last(),
-      // return the download url Observable from getDownloadURL()
-      switchMap(() => clipRef.getDownloadURL())
+    // Subscribe to the upload progress of the video (task) and the screenshot:
+    // ForkJoin waits until all the Observables are completed and then push
+    // the latest values of the observables to the subscriber as a stream.
+    forkJoin([
+      this.task.snapshotChanges(),
+      this.screenshotTask.snapshotChanges()
+    ]).pipe(
+      // ForkJoin the download URL of the video and the screenshot:
+      // We are waiting for Firebase to give us the URLs for the video
+      // and the screenshot:
+      switchMap(() => forkJoin([
+        clipRef.getDownloadURL(),
+        screenshotRef.getDownloadURL()
+      ]))
     ).subscribe({
-      next: async (url) => {
+      next: async (urls) => {
+
+        const [clipURL, screenshotURL] = urls
         // Storing the file data:
         const clip = {
           uid: this.user?.uid as string,
           displayName: this.user?.displayName as string,
           title: this.title.value,
           fileName: `${clipFileName}.mp4`,
-          url,
+          url: clipURL,
+          screenshotURL,
+          screenshotFileName: `${clipFileName}.png`,
           // Time in the server's timezone:
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }
