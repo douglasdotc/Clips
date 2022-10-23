@@ -1,3 +1,5 @@
+// Karma is a server that will run provided test against the application.
+//
 // Karma configuration file, see link for more information
 // https://karma-runner.github.io/1.0/config/configuration-file.html
 
@@ -36,9 +38,9 @@ module.exports = function (config) {
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
-    autoWatch: true,
+    autoWatch: true, // Auto rerun test when there is a change on test files
     browsers: ['Chrome'],
     singleRun: false,
-    restartOnFileChange: true
+    restartOnFileChange: true // rerun test even the changes happens while running a set of tests
   });
 };
