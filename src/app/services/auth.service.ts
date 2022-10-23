@@ -33,7 +33,7 @@ export class AuthService {
       delay(1000)
     )
 
-    // Getting authOnly thisway will not work this service is outside the router-outlet:
+    // Getting authOnly this way will not work this service is outside the router-outlet:
     // this.route.data.subscribe()
 
     // events emits from router when the user is forced to navigate or called an event
@@ -46,7 +46,16 @@ export class AuthService {
       // because router-outlet is loaded at this point.
       // The route store the current route the user is on
       // and represents routes as a tree.
-      map(() => this.route.firstChild),
+      map(() => this.route),
+      // Search through the route to get the node that matches the destination
+      // (ManageComponent/UploadComponent), it is always a linked list like tree
+      // in our case so we just loop through it till the end.
+      map((route) => {
+        while (route.firstChild) {
+          route = route.firstChild
+        }
+        return route
+      }),
       // Use switchMap to look at the latest route data Observable.
       //
       // '??' is the nullish coalescing operator
