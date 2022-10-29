@@ -1,0 +1,13 @@
+[
+  {
+    "//comment0": "Google Cloud (Firebase) can reads cors.json to configure its cross origin settings.",
+    "//comment1" : "Domains we allow to access Firebase",
+    "origin": ["*"],
+    "//comment2" : "Array of headers that can be added to the Response. Content-Type header stores the type of a file.",
+    "responseHeader": ["Content-Type"],
+    "//comment3" : "Array of valid CURD methods",
+    "method": ["GET"],
+    "//comment4": "The time the browser to perform a request before it needs to repeat a request.",
+    "maxAgeSeconds": 3600
+  }
+]
