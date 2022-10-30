@@ -190,8 +190,7 @@ export class UploadComponent implements OnDestroy {
           url: clipURL,
           screenshotURL,
           screenshotFileName: `${clipFileName}.png`,
-          // Time in the server's timezone:
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          // timestamp: set directly in backend (server timezone)
         }
 
         // Add clip info to database, createClip() returns a Promise from the server
@@ -208,7 +207,8 @@ export class UploadComponent implements OnDestroy {
         setTimeout(() => {
           this.router.navigate([
             // Absolute path: clip/:id
-            'clip', clipDocRef.id
+            // 'clip', clipDocRef.id
+            'clip', clipDocRef.docID
           ])
         }, 1000)
       },

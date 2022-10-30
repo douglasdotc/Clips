@@ -8,5 +8,5 @@ export default interface IClip {
   url: string;
   screenshotURL: string;
   screenshotFileName: string;
-  timestamp: firebase.firestore.FieldValue;
+  timestamp?: firebase.firestore.FieldValue;
 }

@@ -17,6 +17,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 import { ClipsListComponent } from './clips-list/clips-list.component';
 import { FbTimestampPipe } from './pipes/fb-timestamp.pipe'
+import { HttpClientModule } from '@angular/common/http'
 
 @NgModule({
   declarations: [
@@ -32,13 +33,19 @@ import { FbTimestampPipe } from './pipes/fb-timestamp.pipe'
   imports: [
     BrowserModule,
     UserModule,
+    // Firebase:
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireAuthModule,
     AngularFirestoreModule,
     AngularFireStorageModule,
+
+    // Spring Boot:
+    HttpClientModule,
+
     // video routing module is imported inside Video module
     // and will register corresponding routes upon import.
     // VideoModule,
+
     // This module should be imported after any module that register child routes
     // The wildcard path is located in app routing.
     // if this is placed before any child routes,
