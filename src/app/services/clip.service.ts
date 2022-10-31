@@ -149,31 +149,32 @@ export class ClipService implements Resolve<IClip | null> {
     }
     this.pendingRequest = true
 
-    // Form the query, get 6 clips in descending order:
-    let query = this.clipsCollection.ref.orderBy('timestamp', 'desc').limit(6)
-
     // get the current lenggth of the clip list:
     const { length } = this.pageClips
+    let startAfter = 0
 
     // Modify the query to start after the last clip we have received if length > 0:
     if (length) {
-      // Get the last clip's docID:
-      const lastDocID = this.pageClips[length - 1].docID
-      // Get the last clip from the database and turn it into a Promise snapshot:
-      const lastDoc = await this.clipsCollection.doc(lastDocID).get().toPromise()
-
-      // Modify the query, startAfter() requires a snapshot as an input:
-      query = query.startAfter(lastDoc)
+      startAfter = length
     }
 
+    // Set params:
+    let currParams = new HttpParams()
+    currParams = currParams.append("startAfter", startAfter)
+    currParams = currParams.append("limit", 6) // Get 6 clips per query.
+
     // Execute the query:
-    const snapshot = await query.get()
+    const response = await this.http.get<Response>(`${this.apiUrl}/getClips`, {
+      params : currParams
+    }).toPromise()
+
+    // Case response as an array of IClip:
+    const receivedClips = (response?.data.clips as IClip[])
 
     // Extract the data from the query result and append the clips to the array:
-    snapshot.forEach(doc => {
+    receivedClips.forEach(doc => {
       this.pageClips.push({
-        docID: doc.id,
-        ...doc.data()
+        ...doc
       })
     })
     this.pendingRequest = false
