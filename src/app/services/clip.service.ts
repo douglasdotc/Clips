@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import {
@@ -57,14 +57,11 @@ export class ClipService implements Resolve<IClip | null> {
     state: RouterStateSnapshot
   ) {
     // return an Observable<IClip>:
-    return this.clipsCollection.doc(route.params.id)
-    .get()
+    return this.getClip(route.params.id)
     .pipe(
-      // return of the Query from get() gives a document snapshot,
-      // we will map it to an Observable:
-      map(snapshot => {
-        // Get the data from the snapshot:
-        const data = snapshot.data()
+      map(response => {
+        // Get clip info from response:
+        const data = (response.data.clip as IClip)
 
         // If the clip does not exist, we redirect the user to home page:
         if (!data) {
@@ -80,10 +77,6 @@ export class ClipService implements Resolve<IClip | null> {
 
   // Add a clip data to the collection 'clips' in the database:
   async createClip(clip: IClip) : Promise<IClip> {
-    // we use add() instead of set() because add() will instruct
-    // Firebase to generate an id instead of passing an id to it
-    // and we dont care about the id in this case.
-    // return this.clipsCollection.add(clip)
     const response = await this.http.post<Response>(`${this.apiUrl}/createClip`, clip).toPromise()
     return (response?.data.clip as IClip)
   }
@@ -174,5 +167,11 @@ export class ClipService implements Resolve<IClip | null> {
       })
     })
     this.pendingRequest = false
+  }
+
+  getClip(docID: string) : Observable<Response> {
+    return this.http.get<Response>(`${this.apiUrl}/getClipByDocID`, {
+      params: new HttpParams().set('docID', docID)
+    })
   }
 }

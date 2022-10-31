@@ -14,14 +14,17 @@ export class FbTimestampPipe implements PipeTransform {
     private datePipe: DatePipe
   ) {}
 
-  transform(value: firebase.firestore.FieldValue | undefined) {
+  // TODO: Resolve this to string | undefined when finish migration
+  transform(value: string | firebase.firestore.FieldValue | undefined) {
     // Guard the function for undefined values:
     if(!value) {
       return ''
     }
 
     // Transform the firebase TimeStamp to Date:
-    const date = (value as firebase.firestore.Timestamp).toDate()
+    const date = (typeof value === 'string') ?
+      new Date(value) : (value as firebase.firestore.Timestamp).toDate()
+
     // Transform the Date to mediumDate using DataPipe:
     return this.datePipe.transform(date, 'mediumDate')
   }

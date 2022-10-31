@@ -207,7 +207,6 @@ export class UploadComponent implements OnDestroy {
         setTimeout(() => {
           this.router.navigate([
             // Absolute path: clip/:id
-            // 'clip', clipDocRef.id
             'clip', clipDocRef.docID
           ])
         }, 1000)
