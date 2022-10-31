@@ -45,17 +45,15 @@ export class ManageComponent implements OnInit {
       this.sort$.next(this.videoOrder)
     })
 
-    // getUserClips() return a list of QuerySnapshot<IClip>.docs
+    // getUserClips() return IClip[]
     this.clipService.getUserClips(this.sort$).subscribe(docs => {
       // Reset
       this.clips = []
 
       docs.forEach(doc => {
         this.clips.push({
-          // ID of the document doc
-          docID: doc.id,
           // Spread operator will merge the data with the object.
-          ...doc.data()
+          ...doc
         })
       })
     })

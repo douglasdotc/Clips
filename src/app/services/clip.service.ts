@@ -90,23 +90,23 @@ export class ClipService implements Resolve<IClip | null> {
       switchMap(values => {
         const[user, sort] = values
 
-        // It is possible that the user is null
+        // It is possible that the user is null:
         if (!user) {
           return of([])
         }
 
-        // Form a query where the clip has a uid == user.uid
-        const query = this.clipsCollection.ref.where(
-          // name of prop to check in document, comparason operator, value to compare
-          'uid', '==', user.uid
-        ).orderBy(
-          'timestamp', sort === '1' ? 'desc' : 'asc'
-        )
+        // Set params:
+        let receivedParams = new HttpParams()
+        receivedParams = receivedParams.append('uid', user.uid)
+        receivedParams = receivedParams.append('sort', sort)
 
-        return query.get() // return a Promise of QuerySnapshot<IClip>
+        // Get clips:
+        return this.http.get<Response>(`${this.apiUrl}/getAllClipsForUser`, {
+          params : receivedParams
+        })
       }),
-      // The clips are in an Observable called docs, we return the docs:
-      map(snapshot => (snapshot as QuerySnapshot<IClip>).docs)
+      // Map response to the array of clips:
+      map(response => (response as Response)?.data.clips as IClip[])
     )
   }
 
