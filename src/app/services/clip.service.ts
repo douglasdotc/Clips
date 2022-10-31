@@ -110,14 +110,20 @@ export class ClipService implements Resolve<IClip | null> {
     )
   }
 
-  updateClip(id: string, title: string) {
-    // Update the title of the clip and return a Promise
-    return this.clipsCollection.doc(id).update({
-      title
-    })
+  async updateClip(id: string, title: string) : Promise<boolean> {
+    // Set parameters:
+    let receivedParams = new HttpParams()
+    receivedParams = receivedParams.append('docID', id)
+    receivedParams = receivedParams.append('title', title)
+
+    // Update the title of the clip and return a Promise:
+    const response = await this.http.put<Response>(`${this.apiUrl}/updateClip`, null, {
+      params : receivedParams
+    }).toPromise()
+    return response?.data.isClipUpdated
   }
 
-  async deleteClip(clip: IClip) {
+  async deleteClip(clip: IClip) : Promise<boolean> {
     // Delete the clip and the screenshot from the storage:
     // Get the clip's reference and the screenshot's reference and delete them.
     const clipRef = this.storage.ref(`clips/${clip.fileName}`)
@@ -129,7 +135,11 @@ export class ClipService implements Resolve<IClip | null> {
     await screenshotRef.delete()
 
     // Delete the clip from the database:
-    await this.clipsCollection.doc(clip.docID).delete()
+    // await this.clipsCollection.doc(clip.docID).delete()
+    const response = await this.http.delete<Response>(`${this.apiUrl}/deleteClip`, {
+      params: new HttpParams().set('docID', (clip.docID as string))
+    }).toPromise()
+    return response?.data.isClipDeleted
   }
 
   async getClips() {
