@@ -1,22 +1,14 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpEvent } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import {
-  AngularFirestore,
-  AngularFirestoreCollection,
-  DocumentReference,
-  QuerySnapshot
-} from '@angular/fire/compat/firestore';
-import { AngularFireStorage } from '@angular/fire/compat/storage';
 import {
   ActivatedRouteSnapshot,
   Resolve,
   Router,
   RouterStateSnapshot
 } from '@angular/router';
-import { querystring } from '@firebase/util';
-import { BehaviorSubject, combineLatest, Observable, of, throwError } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import IClip from '../models/clip.model';
 import Response from '../models/response.model';
 
@@ -24,28 +16,22 @@ import Response from '../models/response.model';
   providedIn: 'root'
 })
 export class ClipService implements Resolve<IClip | null> {
-  // Services that connect the component to a collection in the database:
-  public clipsCollection: AngularFirestoreCollection<IClip>
   // Array to store the clips returned:
   pageClips: IClip[] = []
   // Indicate whether we are processing the user's query:
   pendingRequest = false
   // Clip API URL:
-  private readonly apiUrl = 'http://localhost:8080/api/v1/clip/db';
+  private readonly apiUrl = 'http://localhost:8080/api/v1/clip';
 
   constructor(
     private router: Router,
 
     // Firebase:
-    private db: AngularFirestore,
     private auth: AngularFireAuth,
-    private storage: AngularFireStorage,
 
     // Spring Boot requires HTTP:
     private http: HttpClient
-  ) {
-    this.clipsCollection = db.collection('clips')
-  }
+  ) { }
 
   // We use resolvers to get data from Firebase for this page,
   // resolvers are functions that return data for a page component.
@@ -75,9 +61,10 @@ export class ClipService implements Resolve<IClip | null> {
     )
   }
 
+  // Data Base:
   // Add a clip data to the collection 'clips' in the database:
   async createClip(clip: IClip) : Promise<IClip> {
-    const response = await this.http.post<Response>(`${this.apiUrl}/createClip`, clip).toPromise()
+    const response = await this.http.post<Response>(`${this.apiUrl}/db/createClip`, clip).toPromise()
     return (response?.data.clip as IClip)
   }
 
@@ -101,7 +88,7 @@ export class ClipService implements Resolve<IClip | null> {
         receivedParams = receivedParams.append('sort', sort)
 
         // Get clips:
-        return this.http.get<Response>(`${this.apiUrl}/getAllClipsForUser`, {
+        return this.http.get<Response>(`${this.apiUrl}/db/getAllClipsForUser`, {
           params : receivedParams
         })
       }),
@@ -117,7 +104,7 @@ export class ClipService implements Resolve<IClip | null> {
     receivedParams = receivedParams.append('title', title)
 
     // Update the title of the clip and return a Promise:
-    const response = await this.http.put<Response>(`${this.apiUrl}/updateClip`, null, {
+    const response = await this.http.put<Response>(`${this.apiUrl}/db/updateClip`, null, {
       params : receivedParams
     }).toPromise()
     return response?.data.isClipUpdated
@@ -126,17 +113,12 @@ export class ClipService implements Resolve<IClip | null> {
   async deleteClip(clip: IClip) : Promise<boolean> {
     // Delete the clip and the screenshot from the storage:
     // Get the clip's reference and the screenshot's reference and delete them.
-    const clipRef = this.storage.ref(`clips/${clip.fileName}`)
-    const screenshotRef = this.storage.ref(
-      `screenshots/${clip.screenshotFileName}`
-    )
-
-    await clipRef.delete()
-    await screenshotRef.delete()
+    await this.delete(`clips/${clip.fileName}`)
+    await this.delete(`screenshots/${clip.screenshotFileName}`)
 
     // Delete the clip from the database:
     // await this.clipsCollection.doc(clip.docID).delete()
-    const response = await this.http.delete<Response>(`${this.apiUrl}/deleteClip`, {
+    const response = await this.http.delete<Response>(`${this.apiUrl}/db/deleteClip`, {
       params: new HttpParams().set('docID', (clip.docID as string))
     }).toPromise()
     return response?.data.isClipDeleted
@@ -164,7 +146,7 @@ export class ClipService implements Resolve<IClip | null> {
     currParams = currParams.append("limit", 6) // Get 6 clips per query.
 
     // Execute the query:
-    const response = await this.http.get<Response>(`${this.apiUrl}/getClips`, {
+    const response = await this.http.get<Response>(`${this.apiUrl}/db/getClips`, {
       params : currParams
     }).toPromise()
 
@@ -181,8 +163,35 @@ export class ClipService implements Resolve<IClip | null> {
   }
 
   getClip(docID: string) : Observable<Response> {
-    return this.http.get<Response>(`${this.apiUrl}/getClipByDocID`, {
+    return this.http.get<Response>(`${this.apiUrl}/db/getClipByDocID`, {
       params: new HttpParams().set('docID', docID)
     })
+  }
+
+  // Storage:
+  upload(filePath: string, file: File) : Observable<HttpEvent<Response>> {
+    const formData = new FormData()
+
+    formData.append('file', file)
+
+    return this.http.post<Response>(`${this.apiUrl}/storage/upload`, formData, {
+      reportProgress: true,
+      observe: "events",
+      params : new HttpParams().set('filePath', filePath)
+    })
+  }
+
+  getDownloadURL(filePath: string) : Observable<Response> {
+    return this.http.get<Response>(`${this.apiUrl}/storage/getDownloadURL`, {
+      params : new HttpParams().set('filePath', filePath)
+    })
+  }
+
+  async delete(filePath: string) : Promise<boolean> {
+    const response = await this.http.delete<Response>(`${this.apiUrl}/storage/delete`, {
+      params : new HttpParams().set('filePath', filePath)
+    }).toPromise()
+
+    return response?.data.isDeleted
   }
 }
