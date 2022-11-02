@@ -1,30 +1,36 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
-import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/compat/firestore'
 import { Observable, of } from 'rxjs'
 import { map, delay, filter, switchMap } from 'rxjs/operators'
 import IUser from '../models/user.model'
 import { Router } from '@angular/router'
 import { ActivatedRoute, NavigationEnd } from '@angular/router'
+import Response from '../models/response.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private userCollection: AngularFirestoreCollection<IUser>
   public isAuthenticated$: Observable<boolean>
   public isAuthenticatedWithDelay$: Observable<boolean>
   private redirect = false
 
+  // Spring boot User API:
+  private readonly apiUrl = "http://localhost:8080/api/v1/user"
+
   // auth service does not need to ne accessed in the template,
   // so private to the component class
   constructor(
-    private auth: AngularFireAuth,
-    private db: AngularFirestore,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+
+    // Firebase:
+    private auth: AngularFireAuth,
+
+    // Spring Boot:
+    private http: HttpClient
   ) {
-    this.userCollection = db.collection('users')
     // If user exists, then the user is logged in
     this.isAuthenticated$ = auth.user.pipe(
       map(user => Boolean(user))
@@ -84,12 +90,13 @@ export class AuthService {
     // user add data to the 'user' collection in Firebase with the uid generated,
     // add after register or else there will be no token from Firebase for the user
     // to do this action (Stateless authentication):
-    await this.userCollection.doc(userCred.user.uid).set({
+    await this.http.post<Response>(`${this.apiUrl}/registration`, {
       name: userData.name,
       email: userData.email,
+      password: userData.password,
       age: userData.age,
       phoneNumber: userData.phoneNumber
-    })
+    }).toPromise()
 
     // store displayName to the profile
     await userCred.user.updateProfile({
