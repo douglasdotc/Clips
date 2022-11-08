@@ -17,7 +17,8 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { AngularFireStorageModule } from '@angular/fire/compat/storage';
 import { ClipsListComponent } from './clips-list/clips-list.component';
 import { FbTimestampPipe } from './pipes/fb-timestamp.pipe'
-import { HttpClientModule } from '@angular/common/http'
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http'
+import { HttpRequestInterceptor } from './interceptors/http-request.interceptor';
 
 @NgModule({
   declarations: [
@@ -53,7 +54,13 @@ import { HttpClientModule } from '@angular/common/http'
     // because the child routes are not registered.
     AppRoutingModule
   ],
-  providers: [],
+  providers: [
+    { // registrate HTTP interceptor:
+      provide: HTTP_INTERCEPTORS, // Http interceptor token
+      useClass: HttpRequestInterceptor, // http interceptor class name
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
