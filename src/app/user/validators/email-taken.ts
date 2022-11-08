@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
-import { AngularFireAuth } from "@angular/fire/compat/auth";
 import { AsyncValidator, AbstractControl, ValidationErrors } from "@angular/forms";
+import { AuthService } from "src/app/services/auth.service";
 
 // static methods cannot access variables including services
 // email validation requires response from database to check if
@@ -13,12 +13,12 @@ import { AsyncValidator, AbstractControl, ValidationErrors } from "@angular/form
 })
 export class EmailTaken implements AsyncValidator {
   constructor(
-    private auth: AngularFireAuth
+    private auth: AuthService
   ) { }
 
   validate = (control: AbstractControl): Promise<ValidationErrors | null> => {
-    return this.auth.fetchSignInMethodsForEmail(control.value).then(
-      response => response.length ? { emailTaken: true } : null
+    return this.auth.fetchUserByEmail(control.value).then(
+      response => response?.data.isUserExist? { emailTaken: true } : null
     )
   }
 }
