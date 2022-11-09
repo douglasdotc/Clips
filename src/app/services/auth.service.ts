@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { SessionStorageService } from './session-storage.service';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AngularFireAuth } from '@angular/fire/compat/auth'
 import { Observable, of } from 'rxjs'
-import { map, delay, filter, switchMap } from 'rxjs/operators'
+import { map, filter, switchMap } from 'rxjs/operators'
 import IUser from '../models/user.model'
 import { Router } from '@angular/router'
 import { ActivatedRoute, NavigationEnd } from '@angular/router'
@@ -12,12 +12,15 @@ import Response from '../models/response.model';
   providedIn: 'root'
 })
 export class AuthService {
-  public isAuthenticated$: Observable<boolean>
-  public isAuthenticatedWithDelay$: Observable<boolean>
+  public isAuthenticated = false
+  public isAuthenticatedWithDelay = false
   private redirect = false
 
   // Spring boot User API:
-  private readonly apiUrl = "http://localhost:8080/api/v1/user"
+  private readonly apiUrl = "http://localhost:8080/api/v1/auth"
+  private readonly httpOptions = {
+    headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  };
 
   // auth service does not need to ne accessed in the template,
   // so private to the component class
@@ -25,19 +28,13 @@ export class AuthService {
     private router: Router,
     private route: ActivatedRoute,
 
-    // Firebase:
-    private auth: AngularFireAuth,
-
     // Spring Boot:
-    private http: HttpClient
+    private http: HttpClient,
+    private sessionStorageService: SessionStorageService
   ) {
     // If user exists, then the user is logged in
-    this.isAuthenticated$ = auth.user.pipe(
-      map(user => Boolean(user))
-    )
-    this.isAuthenticatedWithDelay$ = this.isAuthenticated$.pipe(
-      delay(1000)
-    )
+    this.isAuthenticated = sessionStorageService.isLoggedIn()
+    this.isAuthenticatedWithDelay = this.isAuthenticated
 
     // Getting authOnly this way will not work this service is outside the router-outlet:
     // this.route.data.subscribe()
@@ -73,35 +70,41 @@ export class AuthService {
     })
   }
 
+  public authenticate(email: string, password: string) {
+    return this.http.post(`${this.apiUrl}/login`, {
+      email,
+      password
+    },
+    this.httpOptions)
+  }
+
+  public async fetchUserByEmail(email: string) {
+    return await this.http.get<Response>(`${this.apiUrl}/fetchUserByEmail`, {
+      params : new HttpParams().set('email', email)
+    }).toPromise()
+  }
+
   public async createUser(userData: IUser) {
     if (!userData.password) {
       throw new Error("Password not provided!")
     }
 
-    // register:
-    const userCred = await this.auth.createUserWithEmailAndPassword(
-      userData.email as string, userData.password as string
-    )
-
-    if (!userCred.user) {
-      throw new Error("User cannot be found")
-    }
-
-    // user add data to the 'user' collection in Firebase with the uid generated,
-    // add after register or else there will be no token from Firebase for the user
-    // to do this action (Stateless authentication):
-    await this.http.post<Response>(`${this.apiUrl}/registration`, {
+    // Register user:
+    const response = await this.http.post<Response>(`${this.apiUrl}/register`, {
       name: userData.name,
       email: userData.email,
       password: userData.password,
       age: userData.age,
       phoneNumber: userData.phoneNumber
-    }).toPromise()
+    },
+    this.httpOptions).toPromise()
 
-    // store displayName to the profile
-    await userCred.user.updateProfile({
-      displayName: userData.name
-    })
+    if (!response?.data.isRegistered) {
+      throw new Error("Registration failed!")
+    }
+
+    // Authenticate user (Login):
+    this.authenticate(userData.email, userData.password)
   }
 
   // $event does not always exist
@@ -110,7 +113,11 @@ export class AuthService {
       $event.preventDefault()
     }
 
-    await this.auth.signOut()
+    await this.http.post(`${this.apiUrl}/logout`, {}).toPromise()
+    this.sessionStorageService.clean()
+
+    this.isAuthenticated = false
+    this.isAuthenticatedWithDelay = this.isAuthenticated
 
     // Redirect user to Home page:
     // router.navigateByUrl() return a Promise<boolean>

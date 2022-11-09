@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
+import { map, delay } from 'rxjs/operators';
+import { AuthService } from 'src/app/services/auth.service';
+import { SessionStorageService } from 'src/app/services/session-storage.service';
 
 @Component({
   selector: 'app-login',
@@ -21,7 +24,8 @@ export class LoginComponent implements OnInit {
   inSubmission = false
 
   constructor(
-    private auth: AngularFireAuth
+    private auth: AuthService,
+    private sessionStorageService: SessionStorageService
   ) { }
 
   ngOnInit(): void {
@@ -35,19 +39,25 @@ export class LoginComponent implements OnInit {
     this.alertMsg = 'Please wait! we are logging you in.'
     this.alertColor = 'blue'
 
-    try {
-      await this.auth.signInWithEmailAndPassword(
-        this.credentials.email, this.credentials.password
-      )
-
-    } catch (e) {
-      console.error(e) // Debug
-      var errMsg = (e as Error).message
-      this.alertMsg = errMsg
-      this.alertColor = 'red'
-      this.inSubmission = false
-      return
-    }
+    this.auth.authenticate(this.credentials.email, this.credentials.password)
+    .pipe(
+      map(user => this.auth.isAuthenticated = Boolean(user)),
+      delay(1000),
+      map(user => this.auth.isAuthenticatedWithDelay = Boolean(user))
+    )
+    .subscribe({
+      next: data => {
+        this.sessionStorageService.saveUser(data)
+      },
+      error: err => {
+        console.error(err) // Debug
+        var errMsg = (err as Error).message
+        this.alertMsg = errMsg
+        this.alertColor = 'red'
+        this.inSubmission = false
+        return
+      }
+    })
 
     this.alertMsg = 'Success! You are now logged in.'
     this.alertColor = 'green'
