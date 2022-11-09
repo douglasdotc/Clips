@@ -21,7 +21,7 @@ describe('NavComponent', () => {
     ],
     {
       // Force the user login status to be always authenticated
-      isAuthenticated$: of(true)
+      isAuthenticated: true
     }
   )
 
