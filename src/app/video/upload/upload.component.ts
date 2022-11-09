@@ -1,9 +1,9 @@
+import { SessionStorageService } from 'src/app/services/session-storage.service';
+import IUser from 'src/app/models/user.model';
 import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { v4 as uuid } from 'uuid'
-import { combineLatest, forkJoin, switchMap, Observable, filter } from 'rxjs';
-import { AngularFireAuth } from '@angular/fire/compat/auth'
-import firebase from 'firebase/compat/app'
+import { combineLatest, forkJoin, switchMap, Observable, filter, BehaviorSubject } from 'rxjs';
 import { ClipService } from 'src/app/services/clip.service';
 import { Router } from '@angular/router';
 import { FfmpegService } from 'src/app/services/ffmpeg.service';
@@ -44,7 +44,7 @@ export class UploadComponent implements OnDestroy {
   screenshotTask?: Observable<HttpEvent<Response>>
 
   // user:
-  user: firebase.User | null = null
+  user: IUser | null
 
   // Alert properties:
   showAlert = false
@@ -54,14 +54,12 @@ export class UploadComponent implements OnDestroy {
   constructor(
     private router: Router,
     public  ffmpegService: FfmpegService,
-
-    // Firebase:
-    private auth: AngularFireAuth,
     private clipsService: ClipService,
+    private sessionStorageService: SessionStorageService
   ) {
     // user will not be able to access this page if he is not authenticated.
     // the user subscribed will always received a non-null value.
-    auth.user.subscribe(user => this.user = user)
+    this.user = sessionStorageService.getUser()
     this.ffmpegService.init()
   }
 
@@ -158,8 +156,7 @@ export class UploadComponent implements OnDestroy {
         !screenshotEvent.total || !screenshotEvent.loaded) {
         return
       }
-      const total = clipEvent.total + screenshotEvent.total
-      this.percentage = (clipEvent.loaded + screenshotEvent.loaded) / total * 100
+      this.percentage = (clipEvent.loaded/clipEvent.total + screenshotEvent.loaded/screenshotEvent.total) / 2
     })
 
     // Subscribe to the upload progress of the video (task) and the screenshot:
@@ -182,11 +179,12 @@ export class UploadComponent implements OnDestroy {
         const [clipResponse, screenshotResponse] = responses
         const clipURL = clipResponse.data.downloadURL
         const screenshotURL = screenshotResponse.data.downloadURL
+        const user = this.sessionStorageService.getUser()
 
         // Storing the file data:
         const clip = {
-          uid: this.user?.uid as string,
-          displayName: this.user?.displayName as string,
+          uid: user?.uid as string,
+          displayName: user?.name as string,
           title: this.title.value,
           fileName: `${clipFileName}.mp4`,
           url: clipURL,

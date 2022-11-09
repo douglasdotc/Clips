@@ -1,6 +1,6 @@
+import { SessionStorageService } from './session-storage.service';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpEvent } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
 import {
   ActivatedRouteSnapshot,
   Resolve,
@@ -26,11 +26,9 @@ export class ClipService implements Resolve<IClip | null> {
   constructor(
     private router: Router,
 
-    // Firebase:
-    private auth: AngularFireAuth,
-
     // Spring Boot requires HTTP:
-    private http: HttpClient
+    private http: HttpClient,
+    private sessionStorageService:SessionStorageService
   ) { }
 
   // We use resolvers to get data from Firebase for this page,
@@ -69,13 +67,11 @@ export class ClipService implements Resolve<IClip | null> {
   }
 
   // Get the clips that are uploaded by the user
-  getUserClips(sort$: BehaviorSubject<string>) {
-    return combineLatest([
-      this.auth.user,
-      sort$
-    ]).pipe(
-      switchMap(values => {
-        const[user, sort] = values
+  getUserClips(sort$: BehaviorSubject<string>) : Observable<IClip[]> {
+    return sort$.pipe(
+      switchMap(sort => {
+
+        const user = this.sessionStorageService.getUser();
 
         // It is possible that the user is null:
         if (!user) {
@@ -84,7 +80,7 @@ export class ClipService implements Resolve<IClip | null> {
 
         // Set params:
         let receivedParams = new HttpParams()
-        receivedParams = receivedParams.append('uid', user.uid)
+        receivedParams = receivedParams.append('uid', user.uid as string)
         receivedParams = receivedParams.append('sort', sort)
 
         // Get clips:
@@ -124,7 +120,7 @@ export class ClipService implements Resolve<IClip | null> {
     return response?.data.isClipDeleted
   }
 
-  async getClips() {
+  async getClips() : Promise<void> {
     // Guard the function from multiple request at the same time from the user
     if (this.pendingRequest) {
       return
