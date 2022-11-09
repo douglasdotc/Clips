@@ -80,13 +80,23 @@ export class RegisterComponent {
       (this.registerForm.value.password as string)
     )
     .pipe(
-      map(user => this.auth.isAuthenticated = Boolean(user)),
+      map(user => {
+        if (user) {
+          this.auth.isAuthenticated = Boolean(user)
+        }
+        return user
+      }),
       delay(1000),
-      map(user => this.auth.isAuthenticatedWithDelay = Boolean(user))
+      map(user => {
+        if (user) {
+          this.auth.isAuthenticatedWithDelay = Boolean(user)
+        }
+        return user
+      })
     )
     .subscribe({
-      next: data => {
-        this.sessionStorageService.saveUser(data)
+      next: user => {
+        this.sessionStorageService.saveUser(user as IUser)
       },
       error: err => {
         console.error(err) // Debug

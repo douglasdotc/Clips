@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth'
 import { map, delay } from 'rxjs/operators';
+import IUser from 'src/app/models/user.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { SessionStorageService } from 'src/app/services/session-storage.service';
 
@@ -41,13 +42,23 @@ export class LoginComponent implements OnInit {
 
     this.auth.authenticate(this.credentials.email, this.credentials.password)
     .pipe(
-      map(user => this.auth.isAuthenticated = Boolean(user)),
+      map(user => {
+        if (user) {
+          this.auth.isAuthenticated = Boolean(user)
+        }
+        return user
+      }),
       delay(1000),
-      map(user => this.auth.isAuthenticatedWithDelay = Boolean(user))
+      map(user => {
+        if (user) {
+          this.auth.isAuthenticatedWithDelay = Boolean(user)
+        }
+        return user
+      })
     )
     .subscribe({
-      next: data => {
-        this.sessionStorageService.saveUser(data)
+      next: user => {
+        this.sessionStorageService.saveUser(user as IUser)
       },
       error: err => {
         console.error(err) // Debug

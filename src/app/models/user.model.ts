@@ -2,11 +2,12 @@
 //   that will be stored in the database is a model
 // - Interfaces are a feature of Typescript and will not get transpiled
 export default interface IUser {
+  uid?: string,
   name: string,
   email: string,
   password?: string,
-  age:number,
-  phoneNumber: string
+  age?:number,
+  phoneNumber?: string
 }
 
 // - A class will get transpiled
